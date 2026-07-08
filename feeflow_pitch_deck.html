@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>FeeFlow - The Complete ERP for Coaching Institutes</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#5B4DFF',
+                        secondary: '#7C3AED',
+                        accent: '#14B8A6',
+                        dark: '#111827',
+                        light: '#F8FAFC',
+                        success: '#22C55E',
+                        warning: '#F59E0B',
+                        danger: '#EF4444'
+                    },
+                    boxShadow: {
+                        'soft': '0 20px 40px -15px rgba(91, 77, 255, 0.15)',
+                        'glow': '0 0 50px -12px rgba(124, 58, 237, 0.25)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html, body {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background-color: #F8FAFC;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ── Slide base ── */
+        .slide {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.97);
+            transition: opacity 0.45s ease-in-out, transform 0.45s ease-in-out;
+
+            display: flex;
+            flex-direction: column;
+            /* Mobile: scrollable content */
+            justify-content: flex-start;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding: 3.5rem 1.25rem 5.5rem;
+        }
+
+        /* Tablet+ */
+        @media (min-width: 640px) {
+            .slide { padding: 3.5rem 2.5rem 5.5rem; }
+        }
+
+        /* Desktop: vertically centred, no scroll needed */
+        @media (min-width: 1024px) {
+            .slide {
+                justify-content: center;
+                overflow-y: hidden;
+                padding: 2rem 5rem;
+            }
+        }
+
+        /* Large desktop breathing room */
+        @media (min-width: 1440px) {
+            .slide { padding: 2rem 8rem; }
+        }
+
+        .slide.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
+
+        /* ── Gradient text ── */
+        .gradient-text {
+            background: linear-gradient(135deg, #5B4DFF, #7C3AED);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ── Progress bar ── */
+        #progress-bar {
+            position: fixed; top: 0; left: 0;
+            height: 4px;
+            background: linear-gradient(to right, #5B4DFF, #7C3AED);
+            transition: width 0.35s ease;
+            z-index: 60;
+        }
+
+        /* ── Browser mockup ── */
+        .browser-mockup {
+            border-radius: 10px;
+            box-shadow: 0 15px 35px -10px rgba(0,0,0,.12);
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        @media (min-width: 1024px) {
+            .browser-mockup { border-radius: 14px; box-shadow: 0 25px 50px -12px rgba(0,0,0,.14); }
+        }
+
+        .browser-header {
+            background: #f1f5f9;
+            padding: 7px 12px;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+        @media (min-width: 1024px) {
+            .browser-header { padding: 11px 16px; gap: 8px; }
+        }
+
+        .browser-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+        @media (min-width: 1024px) { .browser-dot { width: 12px; height: 12px; } }
+        .dot-red { background: #EF4444; }
+        .dot-yellow { background: #F59E0B; }
+        .dot-green { background: #22C55E; }
+
+        .browser-content { flex-grow: 1; position: relative; }
+        .browser-content img {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: unset;
+        }
+
+        /* screenshot-frame: max-height clamp so very tall images don't overflow,
+           but images are never cropped — overflow scrolls inside the frame */
+        .screenshot-frame {
+            max-height: clamp(220px, 50vw, 560px);
+            overflow: hidden;
+        }
+        @media (min-width: 640px)  { .screenshot-frame { max-height: clamp(280px, 38vw, 540px); } }
+        @media (min-width: 1024px) { .screenshot-frame { max-height: clamp(360px, 34vw, 560px); } }
+        @media (min-width: 1440px) { .screenshot-frame { max-height: clamp(400px, 30vw, 600px); } }
+
+        /* ── Navigation buttons — 48px min touch target ── */
+        .nav-btn {
+            display: flex; align-items: center; justify-content: center;
+            width: 48px; height: 48px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 4px 14px -4px rgba(0,0,0,.18);
+            color: #5B4DFF;
+            cursor: pointer;
+            border: none;
+            transition: background .2s, transform .15s;
+            -webkit-appearance: none;
+        }
+        .nav-btn:hover { background: #f5f3ff; transform: scale(1.07); }
+        .nav-btn:active { transform: scale(.95); }
+        @media (min-width: 1024px) { .nav-btn { width: 52px; height: 52px; } }
+
+        /* ── Dot indicators ── */
+        #dot-nav {
+            position: fixed;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 55;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        @media (min-width: 1024px) { #dot-nav { bottom: 24px; gap: 7px; } }
+
+        .dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            transition: background .25s, width .25s;
+            cursor: pointer;
+        }
+        .dot.active { background: #5B4DFF; width: 18px; border-radius: 4px; }
+
+        /* ── Slide counter ── */
+        #slide-counter-wrap {
+            position: fixed;
+            bottom: 18px; right: 16px;
+            z-index: 55;
+            font-size: .72rem;
+            font-weight: 600;
+            color: #94a3b8;
+            letter-spacing: .08em;
+            background: rgba(255,255,255,.85);
+            backdrop-filter: blur(6px);
+            padding: 4px 10px;
+            border-radius: 999px;
+        }
+        @media (min-width: 1024px) {
+            #slide-counter-wrap {
+                bottom: 28px; right: 36px;
+                background: transparent;
+                backdrop-filter: none;
+                padding: 0;
+                font-size: .8rem;
+            }
+        }
+
+        /* ── Swipe hint — mobile only ── */
+        #swipe-hint {
+            position: fixed;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 55;
+            font-size: .72rem;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            pointer-events: none;
+            transition: opacity .5s;
+        }
+        @media (min-width: 1024px) { #swipe-hint { display: none; } }
+
+        /* ── FAQ accordion ── */
+        .faq-item { cursor: pointer; }
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .35s ease, padding .35s ease;
+            font-size: .875rem;
+            color: #6b7280;
+            padding: 0 1rem;
+        }
+        .faq-item.open .faq-answer { max-height: 120px; padding: .5rem 1rem .25rem; }
+        .faq-item .faq-icon { transition: transform .3s; }
+        .faq-item.open .faq-icon { transform: rotate(45deg); }
+
+        /* ── Prevent tiny-screen horizontal overflow ── */
+        .slide > * { max-width: 100%; }
+        img { max-width: 100%; }
+
+        /* ── Slide 3 rocket circle ── */
+        .rocket-circle {
+            width: clamp(140px, 38vw, 380px);
+            height: clamp(140px, 38vw, 380px);
+        }
+        @media (min-width: 1024px) {
+            .rocket-circle { width: 100%; max-width: 420px; height: auto; aspect-ratio: 1; }
+        }
+
+        /* ── Fluid heading on slide 1 ── */
+        .hero-title { font-size: clamp(2.4rem, 10vw, 5rem); }
+        .hero-sub   { font-size: clamp(1rem, 3.5vw, 1.75rem); }
+        .hero-body  { font-size: clamp(.875rem, 2.5vw, 1.1rem); }
+    </style>
+
+    <!-- ══════════════════════════════════════════
+         MOBILE-FIRST OVERRIDES — targeted fixes
+         for Pricing frame, Comparison table,
+         dots nav, and all-screen polish
+    ══════════════════════════════════════════ -->
+    <style>
+
+        /* ── Tighten slide padding on small phones ── */
+        @media (max-width: 374px) {
+            .slide { padding: 3rem .9rem 5rem; }
+        }
+
+        /* ── Dot nav: collapse on small screens ──
+           18 dots at 7px + 6px gap = 234px which overflows 320px.
+           On mobile keep dots small; hide every other one via JS.
+           CSS: shrink dots and gap on small phones. */
+        @media (max-width: 479px) {
+            #dot-nav { gap: 4px; }
+            #dot-nav .dot { width: 5px; height: 5px; }
+            #dot-nav .dot.active { width: 14px; }
+        }
+
+        /* ── Slide counter: don't overlap nav buttons ── */
+        @media (max-width: 479px) {
+            #slide-counter-wrap { right: 8px; font-size: .65rem; padding: 3px 8px; }
+        }
+
+        /* ══ SLIDE 12: Pricing image ══
+           Give the browser-content a fixed height and make it
+           scrollable so leads can read all four plans. */
+        .pricing-browser .browser-content {
+            height: clamp(220px, 48vw, 480px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            cursor: grab;
+        }
+        .pricing-browser .browser-content:active { cursor: grabbing; }
+
+        /* Thin custom scrollbar */
+        .pricing-browser .browser-content::-webkit-scrollbar { width: 4px; }
+        .pricing-browser .browser-content::-webkit-scrollbar-track { background: #0f172a; }
+        .pricing-browser .browser-content::-webkit-scrollbar-thumb { background: #5B4DFF; border-radius: 2px; }
+
+        /* Scroll hint badge */
+        .scroll-hint {
+            position: absolute;
+            bottom: 8px; right: 8px;
+            background: rgba(91,77,255,.85);
+            color: #fff;
+            font-size: .65rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            pointer-events: none;
+            z-index: 5;
+            letter-spacing: .04em;
+        }
+
+        /* ══ SLIDE 14: Comparison table ══ */
+
+        /* Desktop: keep the original table */
+        .compare-table-wrap { display: block; }
+        .compare-cards-wrap  { display: none; }
+
+        /* Mobile (< 640px): swap table → cards */
+        @media (max-width: 639px) {
+            .compare-table-wrap { display: none; }
+            .compare-cards-wrap  { display: flex; flex-direction: column; gap: 10px; }
+        }
+
+        /* Feature card styling */
+        .compare-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .compare-card .feature-name {
+            font-weight: 600;
+            font-size: .85rem;
+            color: #111827;
+            flex: 1;
+        }
+        .compare-card .verdict-pair {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+        .compare-card .verdict-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            min-width: 52px;
+        }
+        .compare-card .verdict-label {
+            font-size: .6rem;
+            font-weight: 600;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: #94a3b8;
+        }
+        .compare-card .verdict-col.feeflow .verdict-label { color: #5B4DFF; }
+        .compare-card .verdict-col.feeflow {
+            background: #f5f3ff;
+            padding: 6px 10px;
+            border-radius: 10px;
+        }
+
+        /* ── Mobile screenshot frames: tighter ── */
+        @media (max-width: 639px) {
+            .screenshot-frame { max-height: clamp(180px, 52vw, 300px); }
+        }
+
+        /* ── Slide 8 mobile phones: ensure 3-col works on 320px ── */
+        @media (max-width: 374px) {
+            .phones-grid { gap: 6px; }
+            .phones-grid .phone-frame { border-radius: 14px; padding: 4px; }
+        }
+
+        /* ── All feature-list slides: image always below text on mobile ── */
+        @media (max-width: 1023px) {
+            .feature-slide-inner { flex-direction: column !important; }
+            .feature-slide-inner > div { width: 100% !important; }
+        }
+    </style>
+</head>
+<body class="text-dark">
+
+    <div id="progress-bar" style="width:0%"></div>
+
+    <!-- Nav Buttons -->
+    <div class="fixed bottom-[18px] left-4 lg:bottom-[28px] lg:left-8 z-50 flex gap-3 opacity-80 hover:opacity-100 transition-opacity">
+        <button class="nav-btn" onclick="prevSlide()" aria-label="Previous slide">
+            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+        </button>
+        <button class="nav-btn" onclick="nextSlide()" aria-label="Next slide">
+            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+        </button>
+    </div>
+
+    <!-- Dot navigation -->
+    <div id="dot-nav"></div>
+
+    <!-- Slide counter -->
+    <div id="slide-counter-wrap">
+        <span id="slide-counter">1</span> / <span id="slide-total">18</span>
+    </div>
+
+    <!-- Swipe hint (mobile, fades after first swipe) -->
+    <div id="swipe-hint">
+        <i data-lucide="move-horizontal" style="width:14px;height:14px"></i> Swipe to navigate
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         PRESENTATION
+    ═══════════════════════════════════════════ -->
+    <div id="presentation">
+
+        <!-- SLIDE 1: Cover -->
+        <div class="slide active px-5 sm:px-10 lg:px-20">
+            <div class="max-w-5xl mx-auto text-center flex flex-col items-center justify-center h-full py-8">
+                <div class="inline-flex items-center justify-center p-3 sm:p-4 bg-white rounded-2xl sm:rounded-3xl shadow-glow mb-6 sm:mb-8">
+                    <i data-lucide="layers" class="w-8 h-8 sm:w-12 sm:h-12 text-primary"></i>
+                </div>
+                <h1 class="font-heading font-bold hero-title mb-4 tracking-tight">
+                    <span class="gradient-text">FeeFlow</span>
+                </h1>
+                <h2 class="hero-sub font-medium text-gray-600 mb-3">The Complete ERP Platform for Coaching Institutes</h2>
+                <p class="hero-body text-gray-500 mb-8 sm:mb-12 max-w-xl px-2">Simplify Coaching Management. Maximize Fee Collection.</p>
+                <a href="https://techtacticals.com/contact" target="_blank" rel="noopener">
+                    <button class="inline-flex items-center justify-center gap-2 px-6 py-3 sm:px-8 sm:py-4 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-full text-base sm:text-lg shadow-soft hover:scale-105 transition-transform">
+                        Book Free Demo <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </button>
+                </a>
+            </div>
+        </div>
+
+        <!-- SLIDE 2: Problems -->
+        <div class="slide px-5 sm:px-10 lg:px-20">
+            <div class="max-w-6xl mx-auto w-full">
+                <h2 class="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 text-center lg:text-left">Managing an institute is <span class="text-danger">hard.</span></h2>
+                <p class="text-base sm:text-lg text-gray-500 mb-6 sm:mb-10 text-center lg:text-left">Are you still struggling with these common roadblocks?</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
+                    <div class="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-start gap-3">
+                        <div class="p-2 sm:p-3 bg-red-50 text-danger rounded-xl"><i data-lucide="file-spreadsheet" class="w-6 h-6 sm:w-7 sm:h-7"></i></div>
+                        <h3 class="font-heading font-semibold text-base sm:text-lg">Excel Sheets</h3>
+                        <p class="text-gray-500 text-sm">Messy, hard to maintain, and prone to costly data entry errors.</p>
+                    </div>
+                    <div class="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-start gap-3">
+                        <div class="p-2 sm:p-3 bg-red-50 text-danger rounded-xl"><i data-lucide="alert-triangle" class="w-6 h-6 sm:w-7 sm:h-7"></i></div>
+                        <h3 class="font-heading font-semibold text-base sm:text-lg">Missed Payments</h3>
+                        <p class="text-gray-500 text-sm">Losing revenue because due dates slip through the cracks.</p>
+                    </div>
+                    <div class="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-start gap-3">
+                        <div class="p-2 sm:p-3 bg-red-50 text-danger rounded-xl"><i data-lucide="book-x" class="w-6 h-6 sm:w-7 sm:h-7"></i></div>
+                        <h3 class="font-heading font-semibold text-base sm:text-lg">Manual Attendance</h3>
+                        <p class="text-gray-500 text-sm">Wasting class time calling out names and tracking registers.</p>
+                    </div>
+                    <div class="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-start gap-3">
+                        <div class="p-2 sm:p-3 bg-red-50 text-danger rounded-xl"><i data-lucide="phone-off" class="w-6 h-6 sm:w-7 sm:h-7"></i></div>
+                        <h3 class="font-heading font-semibold text-base sm:text-lg">Parent Follow-ups</h3>
+                        <p class="text-gray-500 text-sm">Spending hours calling parents just to remind them of fees.</p>
+                    </div>
+                    <div class="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-start gap-3">
+                        <div class="p-2 sm:p-3 bg-red-50 text-danger rounded-xl"><i data-lucide="pie-chart" class="w-6 h-6 sm:w-7 sm:h-7"></i></div>
+                        <h3 class="font-heading font-semibold text-base sm:text-lg">No Analytics</h3>
+                        <p class="text-gray-500 text-sm">Flying blind without real-time reports on revenue and dues.</p>
+                    </div>
+                    <div class="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-start gap-3">
+                        <div class="p-2 sm:p-3 bg-red-50 text-danger rounded-xl"><i data-lucide="database" class="w-6 h-6 sm:w-7 sm:h-7"></i></div>
+                        <h3 class="font-heading font-semibold text-base sm:text-lg">Scattered Data</h3>
+                        <p class="text-gray-500 text-sm">Student info spread across WhatsApp, diaries, and folders.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 3: Meet FeeFlow -->
+        <div class="slide px-5 sm:px-10 lg:px-20 bg-gradient-to-br from-primary to-secondary text-white">
+            <div class="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-8 lg:gap-16 w-full">
+                <div class="w-full lg:w-1/2 text-center lg:text-left">
+                    <h2 class="font-heading text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 sm:mb-6">Meet <span class="text-accent">FeeFlow</span></h2>
+                    <p class="text-base sm:text-lg lg:text-xl text-blue-100 mb-6 sm:mb-8 leading-relaxed">One dashboard. One login. Everything managed beautifully.</p>
+                    <div class="grid grid-cols-2 gap-3 text-left">
+                        <div class="flex items-center gap-3 bg-white/10 p-3 rounded-xl"><div class="p-1.5 bg-white/20 rounded-lg shrink-0"><i data-lucide="check" class="w-4 h-4"></i></div><span class="font-medium text-sm sm:text-base">Admissions</span></div>
+                        <div class="flex items-center gap-3 bg-white/10 p-3 rounded-xl"><div class="p-1.5 bg-white/20 rounded-lg shrink-0"><i data-lucide="check" class="w-4 h-4"></i></div><span class="font-medium text-sm sm:text-base">Fee Collection</span></div>
+                        <div class="flex items-center gap-3 bg-white/10 p-3 rounded-xl"><div class="p-1.5 bg-white/20 rounded-lg shrink-0"><i data-lucide="check" class="w-4 h-4"></i></div><span class="font-medium text-sm sm:text-base">Attendance</span></div>
+                        <div class="flex items-center gap-3 bg-white/10 p-3 rounded-xl"><div class="p-1.5 bg-white/20 rounded-lg shrink-0"><i data-lucide="check" class="w-4 h-4"></i></div><span class="font-medium text-sm sm:text-base">Smart Reports</span></div>
+                        <div class="flex items-center gap-3 bg-white/10 p-3 rounded-xl"><div class="p-1.5 bg-white/20 rounded-lg shrink-0"><i data-lucide="check" class="w-4 h-4"></i></div><span class="font-medium text-sm sm:text-base">Expense Tracking</span></div>
+                        <div class="flex items-center gap-3 bg-white/10 p-3 rounded-xl"><div class="p-1.5 bg-white/20 rounded-lg shrink-0"><i data-lucide="check" class="w-4 h-4"></i></div><span class="font-medium text-sm sm:text-base">Multi-Branch</span></div>
+                    </div>
+                </div>
+                <div class="w-full lg:w-1/2 flex justify-center">
+                    <div class="rocket-circle bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center shadow-[0_0_60px_rgba(20,184,166,0.3)] p-8 sm:p-10">
+                        <i data-lucide="rocket" style="width:55%;height:55%" class="text-white opacity-90"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 4: Dashboard -->
+        <div class="slide px-5 sm:px-10 lg:px-20">
+            <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-6 lg:gap-14 w-full">
+                <div class="w-full lg:w-1/3">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary font-semibold text-xs sm:text-sm mb-4 sm:mb-6">
+                        <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i> Overview
+                    </div>
+                    <h2 class="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6">Your Daily Command Center</h2>
+                    <ul class="space-y-4 sm:space-y-5">
+                        <li class="flex items-start gap-3">
+                            <div class="mt-0.5 p-2 bg-white shadow rounded-lg text-primary shrink-0"><i data-lucide="bell" class="w-4 h-4"></i></div>
+                            <div><h4 class="font-bold text-sm sm:text-base">Today's Action Center</h4><p class="text-gray-500 text-xs sm:text-sm">Instantly see items needing attention.</p></div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div class="mt-0.5 p-2 bg-white shadow rounded-lg text-success shrink-0"><i data-lucide="indian-rupee" class="w-4 h-4"></i></div>
+                            <div><h4 class="font-bold text-sm sm:text-base">Collection Summary</h4><p class="text-gray-500 text-xs sm:text-sm">Track monthly revenue and dues instantly.</p></div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div class="mt-0.5 p-2 bg-white shadow rounded-lg text-warning shrink-0"><i data-lucide="zap" class="w-4 h-4"></i></div>
+                            <div><h4 class="font-bold text-sm sm:text-base">Quick Actions</h4><p class="text-gray-500 text-xs sm:text-sm">Add students or record payments in one click.</p></div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="w-full lg:w-2/3 mt-4 lg:mt-0">
+                    <div class="browser-mockup screenshot-frame shadow-soft">
+                        <div class="browser-header"><div class="browser-dot dot-red"></div><div class="browser-dot dot-yellow"></div><div class="browser-dot dot-green"></div></div>
+                        <div class="browser-content bg-gray-100 p-1.5">
+                            <img src="./WhatsApp Image 2026-07-07 at 9.01.03 PM (1).jpeg" alt="FeeFlow Dashboard" class="rounded-md border border-gray-200">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 5: Student Management -->
+        <div class="slide px-5 sm:px-10 lg:px-20">
+            <div class="max-w-7xl mx-auto flex flex-col lg:flex-row-reverse items-center gap-6 lg:gap-14 w-full">
+                <div class="w-full lg:w-1/3">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary font-semibold text-xs sm:text-sm mb-4 sm:mb-6">
+                        <i data-lucide="users" class="w-3.5 h-3.5"></i> Students
+                    </div>
+                    <h2 class="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6">Complete Student Profiles</h2>
+                    <p class="text-gray-600 mb-5 text-sm sm:text-base">Manage all your student data securely in the cloud, accessible anytime.</p>
+                    <ul class="space-y-2.5 sm:space-y-3">
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Digital Admission Tracking</li>
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Instant Global Search</li>
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Course & Batch Assignment</li>
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Parent Contact Details</li>
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Full Payment History</li>
+                    </ul>
+                </div>
+                <div class="w-full lg:w-2/3 mt-4 lg:mt-0">
+                    <div class="browser-mockup screenshot-frame shadow-soft">
+                        <div class="browser-header"><div class="browser-dot dot-red"></div><div class="browser-dot dot-yellow"></div><div class="browser-dot dot-green"></div></div>
+                        <div class="browser-content bg-gray-100 p-1.5">
+                            <img src="./WhatsApp Image 2026-07-07 at 9.01.03 PM (4).jpeg" alt="Student Management">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 6: Course & Batch Management -->
+        <div class="slide px-5 sm:px-10 lg:px-20">
+            <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-6 lg:gap-14 w-full">
+                <div class="w-full lg:w-1/3">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary font-semibold text-xs sm:text-sm mb-4 sm:mb-6">
+                        <i data-lucide="book-open" class="w-3.5 h-3.5"></i> Curriculum
+                    </div>
+                    <h2 class="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6">Flexible Course Management</h2>
+                    <p class="text-gray-600 mb-5 text-sm sm:text-base">Built to handle complex fee structures for NEET, JEE, UPSC, and more.</p>
+                    <ul class="space-y-2.5 sm:space-y-3">
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Unlimited Courses & Batches</li>
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Flexible Fee Plans (Monthly/Lumpsum)</li>
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Custom Installment Setup</li>
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Faculty to Batch Mapping</li>
+                    </ul>
+                </div>
+                <div class="w-full lg:w-2/3 mt-4 lg:mt-0">
+                    <div class="browser-mockup screenshot-frame shadow-soft">
+                        <div class="browser-header"><div class="browser-dot dot-red"></div><div class="browser-dot dot-yellow"></div><div class="browser-dot dot-green"></div></div>
+                        <div class="browser-content bg-gray-100 p-1.5">
+                            <img src="./WhatsApp Image 2026-07-07 at 9.01.03 PM (6).jpeg" alt="Batch Management">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 7: Fee Collection -->
+        <div class="slide px-5 sm:px-10 lg:px-20">
+            <div class="max-w-7xl mx-auto flex flex-col lg:flex-row-reverse items-center gap-6 lg:gap-14 w-full">
+                <div class="w-full lg:w-1/3">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/10 text-success font-semibold text-xs sm:text-sm mb-4 sm:mb-6">
+                        <i data-lucide="credit-card" class="w-3.5 h-3.5"></i> Finance
+                    </div>
+                    <h2 class="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6">Stop Revenue Leakage</h2>
+                    <p class="text-gray-600 mb-5 text-sm sm:text-base">Track every rupee seamlessly with our comprehensive fee module.</p>
+                    <ul class="space-y-2.5 sm:space-y-3">
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-success w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Track Due & Outstanding Fees</li>
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-success w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Accept Partial Payments</li>
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-success w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Auto-Generate Digital Receipts</li>
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-success w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Multiple Modes (Cash, UPI, Bank)</li>
+                    </ul>
+                </div>
+                <div class="w-full lg:w-2/3 mt-4 lg:mt-0">
+                    <div class="browser-mockup screenshot-frame shadow-soft">
+                        <div class="browser-header"><div class="browser-dot dot-red"></div><div class="browser-dot dot-yellow"></div><div class="browser-dot dot-green"></div></div>
+                        <div class="browser-content bg-gray-100 p-1.5">
+                            <img src="./WhatsApp Image 2026-07-07 at 9.01.03 PM (7).jpeg" alt="Fee Collection">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 8: Mobile App Experience -->
+        <div class="slide px-5 sm:px-10 lg:px-20">
+            <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-6 lg:gap-14 w-full">
+                <div class="w-full lg:w-1/3">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary font-semibold text-xs sm:text-sm mb-4 sm:mb-6">
+                        <i data-lucide="smartphone" class="w-3.5 h-3.5"></i> Mobile Ready
+                    </div>
+                    <h2 class="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6">FeeFlow works cleanly on mobile too.</h2>
+                    <p class="text-gray-600 mb-5 text-sm sm:text-base">Owners and staff can check dues, add students, and act on daily tasks without sitting at a desktop.</p>
+                    <ul class="space-y-2.5 sm:space-y-3">
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Responsive dashboard for daily actions</li>
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Mobile fee tracking and overdue view</li>
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Student search, filters, and records</li>
+                    </ul>
+                </div>
+                <div class="w-full lg:w-2/3 mt-4 lg:mt-0">
+                    <div class="grid grid-cols-3 gap-3 sm:gap-5 items-end justify-center max-w-xs sm:max-w-sm md:max-w-md lg:max-w-none mx-auto">
+                        <div class="overflow-hidden rounded-[20px] bg-dark p-1.5 shadow-2xl border border-gray-800">
+                            <img src="./WhatsApp Image 2026-07-07 at 9.01.03 PM (3).jpeg" alt="Mobile Dashboard" class="w-full h-auto rounded-[14px]">
+                        </div>
+                        <div class="overflow-hidden rounded-[20px] bg-dark p-1.5 shadow-2xl border border-gray-800 transform -translate-y-4 sm:-translate-y-6">
+                            <img src="./WhatsApp Image 2026-07-07 at 9.01.03 PM (8).jpeg" alt="Mobile Fees" class="w-full h-auto rounded-[14px]">
+                        </div>
+                        <div class="overflow-hidden rounded-[20px] bg-dark p-1.5 shadow-2xl border border-gray-800">
+                            <img src="./WhatsApp Image 2026-07-07 at 9.01.03 PM (5).jpeg" alt="Mobile Students" class="w-full h-auto rounded-[14px]">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 9: Attendance -->
+        <div class="slide px-5 sm:px-10 lg:px-20">
+            <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-6 lg:gap-14 w-full">
+                <div class="w-full lg:w-1/3">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary font-semibold text-xs sm:text-sm mb-4 sm:mb-6">
+                        <i data-lucide="check-square" class="w-3.5 h-3.5"></i> Engagement
+                    </div>
+                    <h2 class="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6">One-Click Attendance</h2>
+                    <p class="text-gray-600 mb-5 text-sm sm:text-base">Save class time and keep parents informed automatically.</p>
+                    <ul class="space-y-2.5 sm:space-y-3">
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Fast Daily Marking</li>
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Batch-wise Views</li>
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Present/Absent Tracking</li>
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Full Student History</li>
+                    </ul>
+                </div>
+                <div class="w-full lg:w-2/3 mt-4 lg:mt-0">
+                    <div class="browser-mockup screenshot-frame shadow-soft">
+                        <div class="browser-header"><div class="browser-dot dot-red"></div><div class="browser-dot dot-yellow"></div><div class="browser-dot dot-green"></div></div>
+                        <div class="browser-content bg-gray-100 p-1.5">
+                            <img src="./WhatsApp Image 2026-07-07 at 9.01.03 PM (9).jpeg" alt="Attendance">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 10: Reports & Analytics -->
+        <div class="slide px-5 sm:px-10 lg:px-20">
+            <div class="max-w-7xl mx-auto flex flex-col lg:flex-row-reverse items-center gap-6 lg:gap-14 w-full">
+                <div class="w-full lg:w-1/3">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary font-semibold text-xs sm:text-sm mb-4 sm:mb-6">
+                        <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> Insights
+                    </div>
+                    <h2 class="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6">Data-Driven Decisions</h2>
+                    <p class="text-gray-600 mb-5 text-sm sm:text-base">Never guess about your institute's financial health again.</p>
+                    <ul class="space-y-2.5 sm:space-y-3">
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Collection Trends</li>
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Outstanding Fees Overview</li>
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>Monthly Revenue Reports</li>
+                        <li class="flex items-center gap-3 text-gray-700 text-sm"><i data-lucide="check-circle-2" class="text-accent w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>One-Click Excel Exports</li>
+                    </ul>
+                </div>
+                <div class="w-full lg:w-2/3 mt-4 lg:mt-0">
+                    <div class="browser-mockup screenshot-frame shadow-soft">
+                        <div class="browser-header"><div class="browser-dot dot-red"></div><div class="browser-dot dot-yellow"></div><div class="browser-dot dot-green"></div></div>
+                        <div class="browser-content bg-gray-100 p-1.5">
+                            <img src="./WhatsApp Image 2026-07-07 at 9.01.03 PM (1).jpeg" alt="Reports" style="object-position:left top">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 11: Settings -->
+        <div class="slide px-5 sm:px-10 lg:px-20">
+            <div class="max-w-5xl mx-auto w-full">
+                <h2 class="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 text-center">Configured for <span class="gradient-text">Your</span> Needs</h2>
+                <p class="text-base sm:text-lg text-gray-500 mb-6 sm:mb-10 text-center">Powerful settings to map FeeFlow to your exact operational style.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
+                    <div class="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition">
+                        <div class="p-3 bg-primary/10 text-primary rounded-xl shrink-0"><i data-lucide="shield" class="w-6 h-6 sm:w-7 sm:h-7"></i></div>
+                        <div><h3 class="font-bold text-base sm:text-lg mb-0.5">Roles & Permissions</h3><p class="text-gray-500 text-xs sm:text-sm">Control what staff can see and do.</p></div>
+                    </div>
+                    <div class="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition">
+                        <div class="p-3 bg-primary/10 text-primary rounded-xl shrink-0"><i data-lucide="building-2" class="w-6 h-6 sm:w-7 sm:h-7"></i></div>
+                        <div><h3 class="font-bold text-base sm:text-lg mb-0.5">Institute Profile</h3><p class="text-gray-500 text-xs sm:text-sm">Brand receipts with your logo and details.</p></div>
+                    </div>
+                    <div class="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition">
+                        <div class="p-3 bg-primary/10 text-primary rounded-xl shrink-0"><i data-lucide="settings-2" class="w-6 h-6 sm:w-7 sm:h-7"></i></div>
+                        <div><h3 class="font-bold text-base sm:text-lg mb-0.5">Automation Rules</h3><p class="text-gray-500 text-xs sm:text-sm">Set schedules for automatic reminders.</p></div>
+                    </div>
+                    <div class="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition">
+                        <div class="p-3 bg-primary/10 text-primary rounded-xl shrink-0"><i data-lucide="file-text" class="w-6 h-6 sm:w-7 sm:h-7"></i></div>
+                        <div><h3 class="font-bold text-base sm:text-lg mb-0.5">Custom Templates</h3><p class="text-gray-500 text-xs sm:text-sm">Personalize SMS and WhatsApp messages.</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 12: Pricing -->
+        <div class="slide px-5 sm:px-10 lg:px-20">
+            <div class="max-w-7xl mx-auto flex flex-col items-center w-full">
+                <h2 class="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 text-center">Simple, Transparent Pricing</h2>
+                <p class="text-base sm:text-lg text-gray-500 mb-4 sm:mb-6 text-center">Plans that scale with your coaching institute.</p>
+                <div class="w-full">
+                    <div class="browser-mockup pricing-browser shadow-2xl border-gray-800 bg-[#0B1120]">
+                        <div class="browser-header border-b-gray-700 bg-[#1e293b]">
+                            <div class="browser-dot dot-red"></div><div class="browser-dot dot-yellow"></div><div class="browser-dot dot-green"></div>
+                        </div>
+                        <div class="browser-content" style="position:relative">
+                            <img src="./WhatsApp Image 2026-07-07 at 9.01.03 PM (10).jpeg" alt="Pricing" style="width:100%;height:auto;display:block">
+                            <div class="scroll-hint">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+                                Scroll to see all plans
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 13: Impact -->
+        <div class="slide px-5 sm:px-10 lg:px-20 bg-gradient-to-br from-primary/5 to-secondary/5">
+            <div class="max-w-6xl mx-auto w-full">
+                <h2 class="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-8 sm:mb-12 text-center">The FeeFlow Impact</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-10">
+                    <div class="text-center bg-white sm:bg-transparent p-5 sm:p-0 rounded-2xl sm:rounded-none shadow-sm sm:shadow-none">
+                        <div class="w-14 h-14 sm:w-20 sm:h-20 mx-auto rounded-full bg-primary/10 sm:bg-white sm:shadow-soft flex items-center justify-center text-primary mb-3 sm:mb-5">
+                            <i data-lucide="clock" class="w-7 h-7 sm:w-10 sm:h-10"></i>
+                        </div>
+                        <h3 class="font-heading text-3xl sm:text-4xl font-bold text-dark mb-2">15+ Hrs</h3>
+                        <p class="text-gray-600 font-medium text-sm sm:text-base">Saved every week on manual administrative tasks.</p>
+                    </div>
+                    <div class="text-center bg-white sm:bg-transparent p-5 sm:p-0 rounded-2xl sm:rounded-none shadow-sm sm:shadow-none">
+                        <div class="w-14 h-14 sm:w-20 sm:h-20 mx-auto rounded-full bg-success/10 sm:bg-white sm:shadow-soft flex items-center justify-center text-success mb-3 sm:mb-5">
+                            <i data-lucide="trending-up" class="w-7 h-7 sm:w-10 sm:h-10"></i>
+                        </div>
+                        <h3 class="font-heading text-3xl sm:text-4xl font-bold text-dark mb-2">99%</h3>
+                        <p class="text-gray-600 font-medium text-sm sm:text-base">Improvement in fee collections and reduced leakage.</p>
+                    </div>
+                    <div class="text-center bg-white sm:bg-transparent p-5 sm:p-0 rounded-2xl sm:rounded-none shadow-sm sm:shadow-none">
+                        <div class="w-14 h-14 sm:w-20 sm:h-20 mx-auto rounded-full bg-accent/10 sm:bg-white sm:shadow-soft flex items-center justify-center text-accent mb-3 sm:mb-5">
+                            <i data-lucide="leaf" class="w-7 h-7 sm:w-10 sm:h-10"></i>
+                        </div>
+                        <h3 class="font-heading text-3xl sm:text-4xl font-bold text-dark mb-2">100%</h3>
+                        <p class="text-gray-600 font-medium text-sm sm:text-base">Paperless office with real-time secure cloud backups.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 14: Comparison -->
+        <div class="slide px-5 sm:px-10 lg:px-20">
+            <div class="max-w-5xl mx-auto w-full">
+                <h2 class="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-8 text-center">The Upgrade is Clear</h2>
+
+                <!-- DESKTOP TABLE (hidden on mobile) -->
+                <div class="compare-table-wrap bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden w-full">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr>
+                                <th class="p-4 sm:p-5 bg-gray-50 border-b font-heading text-sm text-gray-500 w-[45%]">Feature</th>
+                                <th class="p-4 sm:p-5 bg-gray-50 border-b font-heading text-sm text-gray-500 text-center w-[27.5%]">Manual / Excel</th>
+                                <th class="p-4 sm:p-5 bg-primary font-heading text-sm text-white text-center w-[27.5%]">✦ FeeFlow</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="p-3 sm:p-4 border-b font-medium text-sm">Automated Reminders</td><td class="p-3 sm:p-4 border-b text-center"><i data-lucide="x" class="w-5 h-5 text-danger mx-auto"></i></td><td class="p-3 sm:p-4 border-b text-center bg-primary/5"><i data-lucide="check" class="w-5 h-5 text-success mx-auto"></i></td></tr>
+                            <tr><td class="p-3 sm:p-4 border-b font-medium text-sm">Real-time Analytics</td><td class="p-3 sm:p-4 border-b text-center"><i data-lucide="x" class="w-5 h-5 text-danger mx-auto"></i></td><td class="p-3 sm:p-4 border-b text-center bg-primary/5"><i data-lucide="check" class="w-5 h-5 text-success mx-auto"></i></td></tr>
+                            <tr><td class="p-3 sm:p-4 border-b font-medium text-sm">One-Click Attendance</td><td class="p-3 sm:p-4 border-b text-center"><i data-lucide="x" class="w-5 h-5 text-danger mx-auto"></i></td><td class="p-3 sm:p-4 border-b text-center bg-primary/5"><i data-lucide="check" class="w-5 h-5 text-success mx-auto"></i></td></tr>
+                            <tr><td class="p-3 sm:p-4 border-b font-medium text-sm">Bank-level Security</td><td class="p-3 sm:p-4 border-b text-center"><i data-lucide="x" class="w-5 h-5 text-danger mx-auto"></i></td><td class="p-3 sm:p-4 border-b text-center bg-primary/5"><i data-lucide="check" class="w-5 h-5 text-success mx-auto"></i></td></tr>
+                            <tr><td class="p-3 sm:p-4 font-medium text-sm">Online Access (Anywhere)</td><td class="p-3 sm:p-4 text-center"><i data-lucide="x" class="w-5 h-5 text-danger mx-auto"></i></td><td class="p-3 sm:p-4 text-center bg-primary/5"><i data-lucide="check" class="w-5 h-5 text-success mx-auto"></i></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- MOBILE CARDS (hidden on tablet+) -->
+                <div class="compare-cards-wrap">
+                    <!-- Column header -->
+                    <div style="display:flex;justify-content:flex-end;gap:16px;padding:0 4px 4px;margin-bottom:2px">
+                        <span style="min-width:52px;text-align:center;font-size:.65rem;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase">Manual</span>
+                        <span style="min-width:52px;text-align:center;font-size:.65rem;font-weight:700;color:#5B4DFF;letter-spacing:.06em;text-transform:uppercase;background:#f5f3ff;border-radius:6px;padding:3px 4px">FeeFlow</span>
+                    </div>
+                    <div class="compare-card">
+                        <span class="feature-name">Automated Reminders</span>
+                        <div class="verdict-pair">
+                            <div class="verdict-col"><i data-lucide="x" style="width:18px;height:18px;color:#EF4444"></i></div>
+                            <div class="verdict-col feeflow"><i data-lucide="check" style="width:18px;height:18px;color:#22C55E"></i></div>
+                        </div>
+                    </div>
+                    <div class="compare-card">
+                        <span class="feature-name">Real-time Analytics</span>
+                        <div class="verdict-pair">
+                            <div class="verdict-col"><i data-lucide="x" style="width:18px;height:18px;color:#EF4444"></i></div>
+                            <div class="verdict-col feeflow"><i data-lucide="check" style="width:18px;height:18px;color:#22C55E"></i></div>
+                        </div>
+                    </div>
+                    <div class="compare-card">
+                        <span class="feature-name">One-Click Attendance</span>
+                        <div class="verdict-pair">
+                            <div class="verdict-col"><i data-lucide="x" style="width:18px;height:18px;color:#EF4444"></i></div>
+                            <div class="verdict-col feeflow"><i data-lucide="check" style="width:18px;height:18px;color:#22C55E"></i></div>
+                        </div>
+                    </div>
+                    <div class="compare-card">
+                        <span class="feature-name">Bank-level Security</span>
+                        <div class="verdict-pair">
+                            <div class="verdict-col"><i data-lucide="x" style="width:18px;height:18px;color:#EF4444"></i></div>
+                            <div class="verdict-col feeflow"><i data-lucide="check" style="width:18px;height:18px;color:#22C55E"></i></div>
+                        </div>
+                    </div>
+                    <div class="compare-card">
+                        <span class="feature-name">Online Access (Anywhere)</span>
+                        <div class="verdict-pair">
+                            <div class="verdict-col"><i data-lucide="x" style="width:18px;height:18px;color:#EF4444"></i></div>
+                            <div class="verdict-col feeflow"><i data-lucide="check" style="width:18px;height:18px;color:#22C55E"></i></div>
+                        </div>
+                    </div>
+                    <div class="compare-card">
+                        <span class="feature-name">WhatsApp Reminders</span>
+                        <div class="verdict-pair">
+                            <div class="verdict-col"><i data-lucide="x" style="width:18px;height:18px;color:#EF4444"></i></div>
+                            <div class="verdict-col feeflow"><i data-lucide="check" style="width:18px;height:18px;color:#22C55E"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 15: Onboarding -->
+        <div class="slide px-5 sm:px-10 lg:px-20">
+            <div class="max-w-6xl mx-auto text-center w-full">
+                <h2 class="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">Fast & Seamless Onboarding</h2>
+                <p class="text-base sm:text-lg text-gray-500 mb-8 sm:mb-14">Go live in just 5 days with our dedicated support team.</p>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center relative gap-6 sm:gap-4 max-w-xs sm:max-w-none mx-auto px-0 sm:px-8">
+                    <!-- Connector lines -->
+                    <div class="hidden sm:block absolute top-7 left-14 right-14 h-0.5 bg-gray-200 -z-10"></div>
+                    <div class="sm:hidden absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200 -z-10"></div>
+                    <!-- Steps -->
+                    <div class="flex flex-row sm:flex-col items-center sm:items-center gap-4 sm:gap-0 w-full sm:w-auto">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary text-white flex items-center justify-center font-bold text-base sm:mb-3 shadow-lg border-4 border-white shrink-0 z-10">1</div>
+                        <div class="text-left sm:text-center"><h4 class="font-bold text-sm sm:text-base">Day 1</h4><p class="text-gray-500 text-xs">Account Setup</p></div>
+                    </div>
+                    <div class="flex flex-row sm:flex-col items-center sm:items-center gap-4 sm:gap-0 w-full sm:w-auto">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary text-white flex items-center justify-center font-bold text-base sm:mb-3 shadow-lg border-4 border-white shrink-0 z-10">2</div>
+                        <div class="text-left sm:text-center"><h4 class="font-bold text-sm sm:text-base">Day 2</h4><p class="text-gray-500 text-xs">Import Students</p></div>
+                    </div>
+                    <div class="flex flex-row sm:flex-col items-center sm:items-center gap-4 sm:gap-0 w-full sm:w-auto">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary text-white flex items-center justify-center font-bold text-base sm:mb-3 shadow-lg border-4 border-white shrink-0 z-10">3</div>
+                        <div class="text-left sm:text-center"><h4 class="font-bold text-sm sm:text-base">Day 3</h4><p class="text-gray-500 text-xs">Configure Courses</p></div>
+                    </div>
+                    <div class="flex flex-row sm:flex-col items-center sm:items-center gap-4 sm:gap-0 w-full sm:w-auto">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary text-white flex items-center justify-center font-bold text-base sm:mb-3 shadow-lg border-4 border-white shrink-0 z-10">4</div>
+                        <div class="text-left sm:text-center"><h4 class="font-bold text-sm sm:text-base">Day 4</h4><p class="text-gray-500 text-xs">Staff Training</p></div>
+                    </div>
+                    <div class="flex flex-row sm:flex-col items-center sm:items-center gap-4 sm:gap-0 w-full sm:w-auto">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-success text-white flex items-center justify-center font-bold text-base sm:mb-3 shadow-lg border-4 border-white shrink-0 z-10"><i data-lucide="check" class="w-5 h-5"></i></div>
+                        <div class="text-left sm:text-center"><h4 class="font-bold text-sm sm:text-base text-success">Day 5</h4><p class="text-gray-500 text-xs">Go Live!</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 16: Support -->
+        <div class="slide px-5 sm:px-10 lg:px-20">
+            <div class="max-w-5xl mx-auto w-full">
+                <h2 class="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 text-center">We Are Here For You</h2>
+                <p class="text-base sm:text-lg text-gray-500 mb-6 sm:mb-10 text-center">Premium support included with every plan.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
+                    <div class="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 hover:scale-105 transition-transform">
+                        <div class="w-12 h-12 rounded-xl bg-green-100 text-green-600 flex items-center justify-center shrink-0"><i data-lucide="message-circle" class="w-6 h-6"></i></div>
+                        <div><h3 class="font-bold text-base sm:text-lg mb-0.5">WhatsApp Support</h3><p class="text-gray-500 text-xs sm:text-sm">Instant query resolution.</p></div>
+                    </div>
+                    <div class="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 hover:scale-105 transition-transform">
+                        <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0"><i data-lucide="video" class="w-6 h-6"></i></div>
+                        <div><h3 class="font-bold text-base sm:text-lg mb-0.5">Video Tutorials</h3><p class="text-gray-500 text-xs sm:text-sm">Learn at your own pace.</p></div>
+                    </div>
+                    <div class="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 hover:scale-105 transition-transform">
+                        <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center shrink-0"><i data-lucide="mail" class="w-6 h-6"></i></div>
+                        <div><h3 class="font-bold text-base sm:text-lg mb-0.5">Email Support</h3><p class="text-gray-500 text-xs sm:text-sm">Detailed technical assistance.</p></div>
+                    </div>
+                    <div class="bg-white p-5 sm:p-7 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 hover:scale-105 transition-transform">
+                        <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0"><i data-lucide="crown" class="w-6 h-6"></i></div>
+                        <div><h3 class="font-bold text-base sm:text-lg mb-0.5">Priority Onboarding</h3><p class="text-gray-500 text-xs sm:text-sm">Dedicated account manager.</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 17: FAQ -->
+        <div class="slide px-5 sm:px-10 lg:px-20">
+            <div class="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6 lg:gap-14 items-start w-full">
+                <div class="w-full lg:w-1/3">
+                    <h2 class="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-3">Frequently Asked Questions</h2>
+                    <p class="text-gray-500 text-sm sm:text-base">Everything you need to know before making the switch.</p>
+                </div>
+                <div class="w-full lg:w-2/3 space-y-2.5 sm:space-y-3">
+                    <div class="faq-item bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-center p-4 sm:p-5" onclick="toggleFaq(this)">
+                            <span class="font-semibold text-sm sm:text-base pr-4">How long does setup take?</span>
+                            <i data-lucide="plus" class="faq-icon text-primary w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>
+                        </div>
+                        <div class="faq-answer">We get you live in 5 days with dedicated onboarding support — account setup, data import, and staff training included.</div>
+                    </div>
+                    <div class="faq-item bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-center p-4 sm:p-5" onclick="toggleFaq(this)">
+                            <span class="font-semibold text-sm sm:text-base pr-4">Can I import my existing Excel data?</span>
+                            <i data-lucide="plus" class="faq-icon text-primary w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>
+                        </div>
+                        <div class="faq-answer">Yes. Our team helps you migrate all student records, fee history, and batches from Excel into FeeFlow during onboarding.</div>
+                    </div>
+                    <div class="faq-item bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-center p-4 sm:p-5" onclick="toggleFaq(this)">
+                            <span class="font-semibold text-sm sm:text-base pr-4">Can I manage multiple branches?</span>
+                            <i data-lucide="plus" class="faq-icon text-primary w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>
+                        </div>
+                        <div class="faq-answer">Absolutely. FeeFlow supports unlimited branches under one account with separate data and consolidated reports across all locations.</div>
+                    </div>
+                    <div class="faq-item bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-center p-4 sm:p-5" onclick="toggleFaq(this)">
+                            <span class="font-semibold text-sm sm:text-base pr-4">Is my student data secure?</span>
+                            <i data-lucide="plus" class="faq-icon text-primary w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>
+                        </div>
+                        <div class="faq-answer">Yes. Data is encrypted at rest and in transit, stored with bank-level security, and backed up automatically in real time.</div>
+                    </div>
+                    <div class="faq-item bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-center p-4 sm:p-5" onclick="toggleFaq(this)">
+                            <span class="font-semibold text-sm sm:text-base pr-4">Can parents receive automated reminders?</span>
+                            <i data-lucide="plus" class="faq-icon text-primary w-4 h-4 sm:w-5 sm:h-5 shrink-0"></i>
+                        </div>
+                        <div class="faq-answer">Yes. FeeFlow sends automatic WhatsApp and SMS reminders to parents before and after fee due dates — no manual follow-up needed.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 18: CTA -->
+        <div class="slide px-5 sm:px-10 lg:px-20 bg-gradient-to-br from-primary to-secondary text-white">
+            <div class="max-w-4xl mx-auto text-center flex flex-col items-center justify-center h-full py-10 sm:py-0 w-full">
+                <div class="inline-flex items-center justify-center p-3 sm:p-4 bg-white/20 rounded-2xl sm:rounded-3xl mb-5 sm:mb-8 backdrop-blur-md shadow-lg">
+                    <i data-lucide="rocket" class="w-8 h-8 sm:w-12 sm:h-12 text-white"></i>
+                </div>
+                <h2 class="font-heading text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 sm:mb-6 leading-tight">Ready to Transform Your Coaching Institute?</h2>
+                <p class="text-base sm:text-lg lg:text-xl text-blue-100 mb-8 sm:mb-10 px-2">Join hundreds of successful institutes managing their operations on FeeFlow.</p>
+                <div class="flex flex-col sm:flex-row justify-center gap-3 sm:gap-5 w-full max-w-xs sm:max-w-none mx-auto">
+                    <a href="https://techtacticals.com/login" target="_blank" rel="noopener">
+                        <button class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:px-8 sm:py-4 bg-white text-primary font-bold rounded-full text-base sm:text-lg shadow-xl hover:scale-105 transition-transform">
+                            <i data-lucide="calendar" class="w-5 h-5"></i> Book a FREE Demo
+                        </button>
+                    </a>
+                    <a href="https://wa.me/919407138047?text=Hi%20Team%20FeeFlow%2C%0A%0AI%27m%20interested%20in%20FeeFlow%20for%20my%20coaching%20institute.%0A%0AInstitute%20Name%3A%0ACity%3A%0AApprox.%20Students%3A%0A%0APlease%20contact%20me%20to%20schedule%20a%20free%20demo." target="_blank" rel="noopener noreferrer">
+                        <button class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:px-8 sm:py-4 bg-green-500 text-white font-bold rounded-full text-base sm:text-lg shadow-xl hover:scale-105 transition-transform">
+                            <i data-lucide="message-circle" class="w-5 h-5"></i> WhatsApp Us
+                        </button>
+                    </a>
+                </div>
+                <div class="mt-10 sm:mt-14 text-blue-200 flex flex-col sm:flex-row justify-center gap-4 sm:gap-8 text-sm sm:text-base font-medium">
+                    <a href="https://techtacticals.com/products/feeflow" target="_blank" rel="noopener" class="flex items-center justify-center gap-2 hover:text-white transition-colors">
+                        <i data-lucide="globe" class="w-4 h-4"></i> View FeeFlow
+                    </a>
+                    <a href="tel:+919407138047" class="flex items-center justify-center gap-2 hover:text-white transition-colors">
+                        <i data-lucide="phone" class="w-4 h-4"></i> +91 94071 38047
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /presentation -->
+
+    <script>
+        lucide.createIcons();
+
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const progressBar = document.getElementById('progress-bar');
+        const slideCounter = document.getElementById('slide-counter');
+        const slideTotal = document.getElementById('slide-total');
+        const dotNav = document.getElementById('dot-nav');
+        const swipeHint = document.getElementById('swipe-hint');
+
+        slideTotal.textContent = totalSlides;
+
+        // On very small phones, show every other dot to prevent overflow
+        const isSmallPhone = window.innerWidth < 480;
+        slides.forEach((_, i) => {
+            // On phones < 480px: only render dots for every 2nd slide
+            if (isSmallPhone && i % 2 !== 0) return;
+            const dot = document.createElement('div');
+            dot.className = 'dot' + (i === 0 ? ' active' : '');
+            dot.dataset.index = i;
+            dot.addEventListener('click', () => goToSlide(i));
+            dotNav.appendChild(dot);
+        });
+
+        function updateSlide() {
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === currentSlide);
+                if (i === currentSlide) slide.scrollTop = 0;
+            });
+
+            // Progress bar
+            progressBar.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+
+            // Counter
+            slideCounter.textContent = currentSlide + 1;
+
+            // Dots — highlight closest rendered dot
+            dotNav.querySelectorAll('.dot').forEach(dot => {
+                dot.classList.remove('active');
+                const idx = parseInt(dot.dataset.index);
+                if (isSmallPhone) {
+                    // Dots rendered every 2nd slide; light the nearest one
+                    const nearestEven = Math.round(currentSlide / 2) * 2;
+                    if (idx === nearestEven) dot.classList.add('active');
+                } else {
+                    if (idx === currentSlide) dot.classList.add('active');
+                }
+            });
+        }
+
+        function goToSlide(n) {
+            currentSlide = Math.max(0, Math.min(n, totalSlides - 1));
+            updateSlide();
+        }
+
+        function nextSlide() { goToSlide(currentSlide + 1); }
+        function prevSlide() { goToSlide(currentSlide - 1); }
+
+        // Keyboard
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight' || e.key === 'Space') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        // Swipe
+        let touchstartX = 0, touchstartY = 0, touchendX = 0, touchendY = 0;
+        let hintHidden = false;
+
+        document.addEventListener('touchstart', e => {
+            touchstartX = e.changedTouches[0].screenX;
+            touchstartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        document.addEventListener('touchend', e => {
+            touchendX = e.changedTouches[0].screenX;
+            touchendY = e.changedTouches[0].screenY;
+            const diffX = Math.abs(touchendX - touchstartX);
+            const diffY = Math.abs(touchendY - touchstartY);
+            if (diffX > 50 && diffX > diffY * 1.3) {
+                if (touchendX < touchstartX) nextSlide();
+                else prevSlide();
+                if (!hintHidden) {
+                    hintHidden = true;
+                    swipeHint.style.opacity = '0';
+                    setTimeout(() => swipeHint.style.display = 'none', 500);
+                }
+            }
+        }, { passive: true });
+
+        // FAQ accordion
+        function toggleFaq(header) {
+            const item = header.closest('.faq-item');
+            const wasOpen = item.classList.contains('open');
+            document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+            if (!wasOpen) item.classList.add('open');
+        }
+
+        // Auto-hide pricing scroll hint after 3s or on scroll
+        const pricingContent = document.querySelector('.pricing-browser .browser-content');
+        const scrollHint = document.querySelector('.scroll-hint');
+        if (pricingContent && scrollHint) {
+            setTimeout(() => { scrollHint.style.opacity = '0'; }, 3000);
+            pricingContent.addEventListener('scroll', () => { scrollHint.style.opacity = '0'; }, { passive: true, once: true });
+        }
+
+        updateSlide();
+    </script>
+</body>
+</html>
